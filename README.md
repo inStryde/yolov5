@@ -1,3 +1,6 @@
+#### Static branch to avoid compatibility errors
+
+
 <div align="center">
 <p>
    <a align="left" href="https://ultralytics.com/yolov5" target="_blank">
