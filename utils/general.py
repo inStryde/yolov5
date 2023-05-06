@@ -1,4 +1,4 @@
-# YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
+# YOLOv5 🚀 by Ultralytics, GPL-3.0 license
 """
 General utils
 """
@@ -388,23 +388,10 @@ def check_version(current='0.0.0', minimum='0.0.0', name='version ', pinned=Fals
 
 
 @TryExcept()
-def check_requirements(requirements=ROOT.parent / 'requirements.txt', exclude=(), install=True, cmds=''):
-    """
-    Check if installed dependencies meet YOLOv5 requirements and attempt to auto-update if needed.
-
-    Args:
-        requirements (Union[Path, str, List[str]]): Path to a requirements.txt file, a single package requirement as a
-            string, or a list of package requirements as strings.
-        exclude (Tuple[str]): Tuple of package names to exclude from checking.
-        install (bool): If True, attempt to auto-update packages that don't meet requirements.
-        cmds (str): Additional commands to pass to the pip install command when auto-updating.
-
-    Returns:
-        None
-    """
+def check_requirements(requirements=ROOT / 'requirements.txt', exclude=(), install=True, cmds=''):
+    # Check installed dependencies meet YOLOv5 requirements (pass *.txt file or list of packages or single package str)
     prefix = colorstr('red', 'bold', 'requirements:')
     check_python()  # check python version
-    file = None
     if isinstance(requirements, Path):  # requirements.txt file
         file = requirements.resolve()
         assert file.exists(), f'{prefix} {file} not found, check failed.'
@@ -413,25 +400,22 @@ def check_requirements(requirements=ROOT.parent / 'requirements.txt', exclude=()
     elif isinstance(requirements, str):
         requirements = [requirements]
 
-    s = ''  # console string
-    n = 0  # number of packages updates
+    s = ''
+    n = 0
     for r in requirements:
         try:
             pkg.require(r)
         except (pkg.VersionConflict, pkg.DistributionNotFound):  # exception if requirements not met
-            try:  # attempt to import (slower but more accurate)
-                import importlib
-                importlib.import_module(next(pkg.parse_requirements(r)).name)
-            except ImportError:
-                s += f'"{r}" '
-                n += 1
+            s += f'"{r}" '
+            n += 1
 
     if s and install and AUTOINSTALL:  # check environment variable
         LOGGER.info(f"{prefix} YOLOv5 requirement{'s' * (n > 1)} {s}not found, attempting AutoUpdate...")
         try:
-            assert check_online(), 'AutoUpdate skipped (offline)'
-            LOGGER.info(subprocess.check_output(f'pip install {s} {cmds}', shell=True).decode())
-            s = f"{prefix} {n} package{'s' * (n > 1)} updated per {file or requirements}\n" \
+            # assert check_online(), "AutoUpdate skipped (offline)"
+            LOGGER.info(check_output(f'pip install {s} {cmds}', shell=True).decode())
+            source = file if 'file' in locals() else requirements
+            s = f"{prefix} {n} package{'s' * (n > 1)} updated per {source}\n" \
                 f"{prefix} ⚠️ {colorstr('bold', 'Restart runtime or rerun command for updates to take effect')}\n"
             LOGGER.info(s)
         except Exception as e:
